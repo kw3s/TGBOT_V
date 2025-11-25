@@ -139,3 +139,13 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 .vercel
+
+# Test & Debug files
+test_*.js
+debug_*.js
+*_test.js
+*.test.js
+
+# Custom logs
+Logs.txt
+prompt.txt

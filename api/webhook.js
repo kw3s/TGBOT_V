@@ -5,6 +5,10 @@ const { handleAudioMode } = require('../lib/audioMode');
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token);
 
+// Duplicate message prevention (keep last 100 message IDs)
+const processedMessages = new Set();
+const MAX_PROCESSED = 100;
+
 module.exports = async (req, res) => {
     try {
         const body = req.body;
@@ -15,6 +19,20 @@ module.exports = async (req, res) => {
             const msg = body.message;
             const chatId = msg.chat.id;
             const text = msg.text;
+
+            // Prevent duplicate processing
+            const messageId = `${chatId}_${msg.message_id}`;
+            if (processedMessages.has(messageId)) {
+                console.log(`Duplicate message detected: ${messageId}. Ignoring.`);
+                res.status(200).send('OK');
+                return;
+            }
+            processedMessages.add(messageId);
+            if (processedMessages.size > MAX_PROCESSED) {
+                // Remove the oldest item if the set exceeds max size
+                const firstItem = processedMessages.values().next().value;
+                processedMessages.delete(firstItem);
+            }
 
             // Command: /start or /modes
             if (text === '/start' || text === '/modes') {
