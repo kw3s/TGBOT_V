@@ -36,6 +36,10 @@ module.exports = async (req, res) => {
 
             // Command: /start or /modes
             if (text === '/start' || text === '/modes') {
+                // Mark session start for this user
+                const { logger } = require('../lib/logger');
+                logger.markSessionStart(msg.from.id);
+
                 await bot.sendMessage(chatId, "Welcome to VidGen5! 🎵🎥\nSelect a mode:", {
                     reply_markup: {
                         inline_keyboard: [
@@ -87,16 +91,16 @@ module.exports = async (req, res) => {
                     await bot.sendMessage(chatId, "⛔ Access denied. Admin only.");
                 } else {
                     const { logger } = require('../lib/logger');
-                    const logs = logger.getLogs();
-                    const logCount = logger.getCount();
+                    const logs = logger.getSessionLogs(userId);
+                    const logLines = logs.split('\n').filter(l => l.trim()).length;
 
                     // Send as text file attachment
                     const buffer = Buffer.from(logs, 'utf-8');
                     await bot.sendDocument(chatId, buffer, {}, {
-                        filename: `bot_logs_${Date.now()}.txt`,
+                        filename: `session_logs_${Date.now()}.txt`,
                         contentType: 'text/plain'
                     });
-                    await bot.sendMessage(chatId, `📋 Sent ${logCount} log entries.`);
+                    await bot.sendMessage(chatId, `📋 Sent ${logLines} log entries from your current session.`);
                 }
             }
             // Handle Replies (Stateless Context)
