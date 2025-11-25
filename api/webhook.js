@@ -48,12 +48,12 @@ module.exports = async (req, res) => {
             }
             // Command: /help
             else if (text === '/help') {
-                await bot.sendMessage(chatId, "🆘 **VidGen5 Help**\n\n" +
-                    "**Modes:**\n" +
-                    "📸 **Manual:** Send an Image, then reply with Audio.\n" +
-                    "🎵 **Audio Only:** Send Audio, I'll find the cover art.\n" +
-                    "🔗 **Link:** (Coming Soon) Send a link.\n\n" +
-                    "**Commands:**\n" +
+                await bot.sendMessage(chatId, "🆘 VidGen5 Help\n\n" +
+                    "Modes:\n" +
+                    "📸 Manual: Send an Image, then reply with Audio.\n" +
+                    "🎵 Audio Only: Send Audio, I'll find the cover art.\n" +
+                    "🔗 Link: (Coming Soon) Send a link.\n\n" +
+                    "Commands:\n" +
                     "/modes - Show Mode Menu\n" +
                     "/cancel - Cancel current operation\n" +
                     "/help - Show this message");
@@ -156,11 +156,11 @@ module.exports = async (req, res) => {
             const data = query.data;
 
             if (data === 'mode_manual') {
-                await bot.sendMessage(chatId, "📸 **Manual Mode**\n\nPlease send me an **Image** first.");
+                await bot.sendMessage(chatId, "📸 Manual Mode\n\nPlease send me an Image first.");
             } else if (data === 'mode_audio') {
-                await bot.sendMessage(chatId, "🎵 **Audio Only Mode**\n\nPlease send me an **Audio** file.");
+                await bot.sendMessage(chatId, "🎵 Audio Only Mode\n\nPlease send me an Audio file.");
             } else if (data === 'mode_link') {
-                await bot.sendMessage(chatId, "🔗 **Link/Search Mode**\n\nSend me a **YouTube Link** OR just type a **Song Name**.\n(e.g. 'Drake God's Plan' - hyphen is optional!)");
+                await bot.sendMessage(chatId, "🔗 Link/Search Mode\n\nSend me a YouTube Link OR just type a Song Name.\n(e.g. 'Drake God's Plan' - hyphen is optional!)");
             }
 
             // Answer the query to stop the loading animation
