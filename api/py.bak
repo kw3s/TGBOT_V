@@ -1,0 +1,33 @@
+from http.server import BaseHTTPRequestHandler
+import os
+import json
+import asyncio
+from telegram import Update, Bot
+from telegram.ext import Application
+
+# Initialize Bot
+TOKEN = os.environ.get("BOT_TOKEN")
+
+async def process_update(update_data):
+    # Basic setup for python-telegram-bot v20+
+    app = Application.builder().token(TOKEN).build()
+    
+    # Add your handlers here
+    # await app.process_update(update) logic...
+    # Note: PTB is heavy for serverless. 
+    # Many prefer using simple 'requests' library for Vercel Python bots 
+    # to avoid timeouts.
+
+# Vercel looks for a class handler in Python
+class handler(BaseHTTPRequestHandler):
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        json_data = json.loads(post_data.decode('utf-8'))
+
+        # You would pass json_data to your bot logic here
+        # For simple bots, you might just use the 'requests' lib to hit the Telegram API directly
+        
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write('OK'.encode('utf-8'))
