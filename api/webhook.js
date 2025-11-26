@@ -44,8 +44,8 @@ module.exports = async (req, res) => {
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: "📸 Manual Mode (Image + Audio)", callback_data: "mode_manual" }],
-                            [{ text: "🎵 Audio Only Mode", callback_data: "mode_audio" }],
-                            [{ text: "🔗 Link Mode", callback_data: "mode_link" }]
+                            [{ text: "🎵 Audio Only Mode ⭐ (Best!)", callback_data: "mode_audio" }],
+                            [{ text: "🔗 Link Mode (50/50)", callback_data: "mode_link" }]
                         ]
                     }
                 });
@@ -55,8 +55,8 @@ module.exports = async (req, res) => {
                 await bot.sendMessage(chatId, "🆘 VidGen5 Help\n\n" +
                     "Modes:\n" +
                     "📸 Manual: Send an Image, then reply with Audio.\n" +
-                    "🎵 Audio Only: Send Audio, I'll find the cover art.\n" +
-                    "🔗 Link: (Coming Soon) Send a link.\n\n" +
+                    "🎵 Audio Only: Send Audio, I'll find the cover art. (⭐ Most Reliable!)\n" +
+                    "🔗 Link: Send a DSP link or song name. (⚠️ 50/50 - may not find audio)\n\n" +
                     "Commands:\n" +
                     "/modes - Show Mode Menu\n" +
                     "/cancel - Cancel current operation\n" +
@@ -90,17 +90,17 @@ module.exports = async (req, res) => {
                 if (!adminUserId || userId !== adminUserId) {
                     await bot.sendMessage(chatId, "⛔ Access denied. Admin only.");
                 } else {
-                    const { logger } = require('../lib/logger');
-                    const logs = logger.getSessionLogs(userId);
-                    const logLines = logs.split('\n').filter(l => l.trim()).length;
-
-                    // Send as text file attachment
-                    const buffer = Buffer.from(logs, 'utf-8');
-                    await bot.sendDocument(chatId, buffer, {}, {
-                        filename: `session_logs_${Date.now()}.txt`,
-                        contentType: 'text/plain'
-                    });
-                    await bot.sendMessage(chatId, `📋 Sent ${logLines} log entries from your current session.`);
+                    await bot.sendMessage(chatId, 
+                        "📋 VidGen5 Logs\n\n" +
+                        "ℹ️ On serverless platforms (Vercel), in-memory logs don't persist between function calls.\n\n" +
+                        "✅ All bot activity IS logged to console and captured by Vercel.\n\n" +
+                        "📍 To view complete logs:\n" +
+                        "1. Go to Vercel Dashboard\n" +
+                        "2. Select your project\n" +
+                        "3. Click 'Logs' tab\n" +
+                        "4. Filter by your user ID or time range\n\n" +
+                        "💡 All errors, warnings, and info messages are there!"
+                    );
                 }
             }
             // Handle Replies (Stateless Context)

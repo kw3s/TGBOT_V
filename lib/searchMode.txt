@@ -597,22 +597,6 @@ async function handleSearchMode(bot, msg) {
         // Final fallback
         if (!coverUrl) {
             console.log("No cover found, using placeholder.");
-            coverUrl = "https://placehold.co/600x600/1a1a1a/ffffff?text=No+Cover";
-        }
-
-        await bot.sendMessage(chatId, `✅ Found: ${videoTitle}\n⬇️ Downloading...`);
-
-        // 3. Prepare Paths
-        const sanitizedTitle = videoTitle.replace(/[<>:"/\|?*]/g, '').substring(0, 100);
-        const audioPath = path.join(tmpDir, `audio_${Date.now()}.mp3`);
-        const imagePath = path.join(tmpDir, `cover_${Date.now()}.jpg`);
-        const outputPath = path.join(tmpDir, `${sanitizedTitle}.mp4`);
-
-        console.log("Step 3: Downloading Assets...");
-
-        // Download Cover
-        try {
-            await downloadFile(coverUrl, imagePath);
         } catch (e) {
             console.error("Failed to download cover:", e.message);
         }
