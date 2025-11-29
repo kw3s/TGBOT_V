@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: deemix-service
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    healthCheckPath: /health
+    envVars:
+      - key: DEEZER_ARL
+        sync: false  # Must be set manually in Render dashboard
+      - key: PORT
+        value: 10000
