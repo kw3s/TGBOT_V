@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+import subprocess
 import asyncio
 
 # Configure logging
@@ -28,13 +29,13 @@ async def health_check():
     return JSONResponse({
         "status": "healthy",
         "deezer_arl_configured": arl_set,
-        "streamrip_version": "python-api"
+        "streamrip_version": "cli-fixed"
     })
 
 @app.post("/download")
 async def download_track(request: DownloadRequest):
     """
-    Download a track from Spotify/Deezer using streamrip Python API.
+    Download a track from Spotify/Deezer using streamrip.
     Returns the downloaded audio file.
     """
     try:
@@ -44,36 +45,77 @@ async def download_track(request: DownloadRequest):
         temp_dir = tempfile.mkdtemp()
         
         try:
-            # Use streamrip Python API
-            from streamrip.cli.cli import RipCore
-            from streamrip.config import Config
+            # Create streamrip config in temp directory
+            config_dir = Path(temp_dir) / ".config" / "streamrip"
+            config_dir.mkdir(parents=True, exist_ok=True)
             
-            # Create streamrip config
-            config_dict = {
-                "downloads": {
-                    "folder": temp_dir,
-                    "source_subdirectories": False
-                },
-                "database": {
-                    "enabled": False
-                },
-                "qobuz": {"enabled": False},
-                "tidal": {"enabled": False},
-                "deezer": {
-                    "enabled": True,
-                    "arl": os.getenv("DEEZER_ARL", ""),
-                },
-                "soundcloud": {"enabled": False},
-                "youtube": {"enabled": False}
-            }
+            # Write config.toml
+            config_content = f"""
+[downloads]
+folder = "{temp_dir}"
+source_subdirectories = false
+
+[database]
+downloads_enabled = false
+
+[conversion]
+enabled = false
+
+[qobuz]
+enabled = false
+
+[tidal]
+enabled = false
+
+[deezer]
+enabled = true
+arl = "{os.getenv('DEEZER_ARL', '')}"
+
+[soundcloud]
+enabled = false
+
+[youtube]
+enabled = false
+
+[metadata]
+set_playlist_to_album = true
+
+[filepaths]
+track_format = "{{artist}} - {{title}}"
+"""
             
-            config = Config(config_dict)
+            config_file = config_dir / "config.toml"
+            config_file.write_text(config_content)
             
-            # Initialize and run download
-            logger.info(f"Downloading with streamrip API: {request.url}")
+            # CORRECT USAGE per official docs: rip url <URL> (no extra flags!)
+            cmd = ["rip", "url", request.url]
             
-            core = RipCore(config)
-            await core.async_download(request.url)
+            logger.info(f"Running: {' '.join(cmd)}")
+            logger.info(f"Config dir: {config_dir}")
+            
+            # Execute with timeout
+            env = os.environ.copy()
+            env["HOME"] = temp_dir  # Point to temp config
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                env=env
+            )
+            
+            stdout, stderr = await asyncio.wait_for(
+                process.communicate(),
+                timeout=120.0  # 2 minute timeout
+            )
+            
+            if process.returncode != 0:
+                error_msg = stderr.decode() if stderr else "Unknown error"
+                logger.error(f"Streamrip failed: {error_msg}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Download failed: {error_msg}"
+                )
             
             # Find downloaded file
             downloaded_files = list(Path(temp_dir).rglob("*.*"))
@@ -100,19 +142,19 @@ async def download_track(request: DownloadRequest):
                 background=lambda: shutil.rmtree(temp_dir, ignore_errors=True)
             )
             
-        except ImportError as e:
-            logger.error(f"Streamrip import error: {str(e)}")
+        except asyncio.TimeoutError:
+            logger.error("Download timeout")
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(
-                status_code=500,
-                detail=f"Streamrip library not available: {str(e)}"
+                status_code=504,
+                detail="Download timeout (>2 minutes)"
             )
         except Exception as e:
             logger.error(f"Download error: {str(e)}")
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Download failed: {str(e)}"
+                detail=str(e)
             )
             
     except Exception as e:
