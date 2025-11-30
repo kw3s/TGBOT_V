@@ -2,7 +2,7 @@ fastapi>=0.104.0,<0.105.0
 uvicorn>=0.24.0,<0.25.0
 pydantic>=2.5.0,<3.0.0
 requests>=2.31.0
-aiofiles>=23.0.0
+aiofiles>=0.7,<0.8
 python-multipart>=0.0.6
 
 # Streamrip from dev branch for latest fixes
