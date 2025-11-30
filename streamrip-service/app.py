@@ -52,13 +52,13 @@ async def download_track(request: DownloadRequest):
             }
             quality_code = quality_map.get(request.quality, "3")
             
-            # Run streamrip
+            # Streamrip dev branch uses different CLI syntax
+            # Quality is set in config.toml, just download the URL
             cmd = [
                 "rip",
                 "url",
                 request.url,
-                "--quality", quality_code,
-                "--folder", temp_dir,
+                "--directory", temp_dir,
                 "--no-db"
             ]
             
