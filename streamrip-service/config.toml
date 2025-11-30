@@ -1,0 +1,32 @@
+# Streamrip configuration for Deezer downloads
+
+[downloads]
+folder = "./downloads"
+source_subdirectories = false
+
+[qobuz]
+enabled = false
+
+[tidal]
+enabled = false
+
+[deezer]
+enabled = true
+arl = "{DEEZER_ARL}"
+quality = 3  # 0=128kbps, 1=320kbps, 2=FLAC
+
+[soundcloud]
+enabled = false
+
+[youtube]
+enabled = false
+
+[conversion]
+enabled = false
+
+[metadata]
+set_playlist_to_album = true
+exclude = []
+
+[filepaths]
+track_format = "{tracknumber}. {artist} - {title}"
