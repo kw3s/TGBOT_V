@@ -40,12 +40,12 @@ module.exports = async (req, res) => {
                 const { logger } = require('../lib/logger');
                 logger.markSessionStart(msg.from.id);
 
-                await bot.sendMessage(chatId, "Welcome to VidGen5! 🎵🎥\nSelect a mode:", {
+                await bot.sendMessage(chatId, "Welcome to VidGen5!🎥\nSelect a mode:", {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: "📸 Manual Mode (Image + Audio)", callback_data: "mode_manual" }],
+                            [{ text: "🔧 Manual Mode (Image + Audio)", callback_data: "mode_manual" }],
                             [{ text: "🎵 Audio Only Mode ⭐ (Best!)", callback_data: "mode_audio" }],
-                            [{ text: "🔗 Link Mode (50/50)", callback_data: "mode_link" }]
+                            [{ text: "🔗 Link Mode", callback_data: "mode_link" }]
                         ]
                     }
                 });
@@ -54,13 +54,13 @@ module.exports = async (req, res) => {
             else if (text === '/help') {
                 await bot.sendMessage(chatId, "🆘 VidGen5 Help\n\n" +
                     "Modes:\n" +
-                    "📸 Manual: Send an Image, then reply with Audio.\n" +
+                    "🔧 Manual: Send an Image, then reply with Audio.\n" +
                     "🎵 Audio Only: Send Audio, I'll find the cover art. (⭐ Most Reliable!)\n" +
                     "🔗 Link: Send a DSP link or song name. (⚠️ 50/50 - may not find audio)\n\n" +
                     "Commands:\n" +
                     "/modes - Show Mode Menu\n" +
                     "/cancel - Cancel current operation\n" +
-                    "/help - Show this message");
+                    "/help - Show this message. Also note, dsp stands for Digital Service Provider e.g. Spotify, Apple Music, Amazon Music, Tidal, Deezer, e.t.c");
             }
             // Command: /cancel
             else if (text === '/cancel') {
@@ -160,11 +160,11 @@ module.exports = async (req, res) => {
             const data = query.data;
 
             if (data === 'mode_manual') {
-                await bot.sendMessage(chatId, "📸 Manual Mode\n\nPlease send me an Image first.");
+                await bot.sendMessage(chatId, "🔧 Manual Mode\n\nPlease send me an Image first.");
             } else if (data === 'mode_audio') {
-                await bot.sendMessage(chatId, "🎵 Audio Only Mode\n\nPlease send me an Audio file.");
+                await bot.sendMessage(chatId, "🎵 Audio Only Mode\n\nPlease send me an Audio file. Don't have one? Send a dsp Link to @MUSICSHUNTERSBOT, and forward the audio to me after.");
             } else if (data === 'mode_link') {
-                await bot.sendMessage(chatId, "🔗 Link/Search Mode\n\nSend me a YouTube Link OR just type a Song Name.\n(e.g. 'Drake God's Plan' - hyphen is optional!)");
+                await bot.sendMessage(chatId, "🔗 Link/Search Mode\n\nSend me a dsp Link OR just type a Song Name.\n(e.g. 'Drake God's Plan')");
             }
 
             // Answer the query to stop the loading animation
