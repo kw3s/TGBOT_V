@@ -6,7 +6,6 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-import subprocess
 import asyncio
 
 # Configure logging
@@ -29,13 +28,13 @@ async def health_check():
     return JSONResponse({
         "status": "healthy",
         "deezer_arl_configured": arl_set,
-        "streamrip_version": "dev"
+        "streamrip_version": "python-api"
     })
 
 @app.post("/download")
 async def download_track(request: DownloadRequest):
     """
-    Download a track from Spotify/Deezer using streamrip.
+    Download a track from Spotify/Deezer using streamrip Python API.
     Returns the downloaded audio file.
     """
     try:
@@ -45,50 +44,42 @@ async def download_track(request: DownloadRequest):
         temp_dir = tempfile.mkdtemp()
         
         try:
-            # Prepare streamrip command
-            quality_map = {
-                "mp3": "3",  # 320kbps MP3
-                "flac": "2"  # FLAC
+            # Use streamrip Python API
+            from streamrip.cli.cli import RipCore
+            from streamrip.config import Config
+            
+            # Create streamrip config
+            config_dict = {
+                "downloads": {
+                    "folder": temp_dir,
+                    "source_subdirectories": False
+                },
+                "database": {
+                    "enabled": False
+                },
+                "qobuz": {"enabled": False},
+                "tidal": {"enabled": False},
+                "deezer": {
+                    "enabled": True,
+                    "arl": os.getenv("DEEZER_ARL", ""),
+                },
+                "soundcloud": {"enabled": False},
+                "youtube": {"enabled": False}
             }
-            quality_code = quality_map.get(request.quality, "3")
             
-            # Streamrip dev branch uses different CLI syntax
-            # Quality is set in config.toml, just download the URL
-            cmd = [
-                "rip",
-                "url",
-                request.url,
-                "--directory", temp_dir,
-                "--no-db"
-            ]
+            config = Config(config_dict)
             
-            logger.info(f"Running: {' '.join(cmd)}")
+            # Initialize and run download
+            logger.info(f"Downloading with streamrip API: {request.url}")
             
-            # Execute with timeout
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=120.0  # 2 minute timeout
-            )
-            
-            if process.returncode != 0:
-                error_msg = stderr.decode() if stderr else "Unknown error"
-                logger.error(f"Streamrip failed: {error_msg}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Download failed: {error_msg}"
-                )
+            core = RipCore(config)
+            await core.async_download(request.url)
             
             # Find downloaded file
             downloaded_files = list(Path(temp_dir).rglob("*.*"))
             audio_files = [
                 f for f in downloaded_files 
-                if f.suffix.lower() in ['.mp3', '.flac', '.m4a']
+                if f.suffix.lower() in ['.mp3', '.flac', '.m4a', '.opus']
             ]
             
             if not audio_files:
@@ -100,7 +91,7 @@ async def download_track(request: DownloadRequest):
             
             # Return the first audio file found
             audio_file = audio_files[0]
-            logger.info(f"Sending file: {audio_file.name}")
+            logger.info(f"Sending file: {audio_file.name} ({audio_file.stat().st_size} bytes)")
             
             return FileResponse(
                 path=str(audio_file),
@@ -109,19 +100,19 @@ async def download_track(request: DownloadRequest):
                 background=lambda: shutil.rmtree(temp_dir, ignore_errors=True)
             )
             
-        except asyncio.TimeoutError:
-            logger.error("Download timeout")
+        except ImportError as e:
+            logger.error(f"Streamrip import error: {str(e)}")
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(
-                status_code=504,
-                detail="Download timeout (>2 minutes)"
+                status_code=500,
+                detail=f"Streamrip library not available: {str(e)}"
             )
         except Exception as e:
             logger.error(f"Download error: {str(e)}")
             shutil.rmtree(temp_dir, ignore_errors=True)
             raise HTTPException(
                 status_code=500,
-                detail=str(e)
+                detail=f"Download failed: {str(e)}"
             )
             
     except Exception as e:
