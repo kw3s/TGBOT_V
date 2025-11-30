@@ -149,3 +149,6 @@ debug_*.js
 # Custom logs
 Logs.txt
 prompt.txt
+
+.vercel
+.env*.local
