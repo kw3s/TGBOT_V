@@ -44,17 +44,29 @@ async def download_track(request: DownloadRequest):
         # Create temp directory for download
         temp_dir = tempfile.mkdtemp()
         
-        try:
-            # Prepare tidal-dl-ng command
-            quality_map = {
-                "high": "HIGH",
-                "hires": "LOSSLESS", 
-                "master": "HI_RES"
+            
+            # CRITICAL: tidal-dl-ng requires token.json file at ~/.config/tidal-dl-ng/token.json
+            # Environment variable doesn't work - must create config file
+            config_dir = Path.home() / ".config" / "tidal-dl-ng"
+            config_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Parse the TIDAL_TOKEN from env (it's the access_token from your local token.json)
+            token_data = {
+                "token_type": "Bearer",
+                "access_token": os.getenv("TIDAL_TOKEN", ""),
+                "refresh_token": "",  # We only have access token
+                "expiry_time": 1764546969.0  # From your token 
             }
-            quality_level = quality_map.get(request.quality, "LOSSLESS")
+            
+            import json
+            token_file = config_dir / "token.json"
+            with open(token_file, 'w') as f:
+                json.dump(token_data, f, indent=4)
+            
+            logger.info(f"Created token config at: {token_file}")
             
             # CORRECT USAGE per official docs: tidal-dl-ng dl <URL>
-            # No flags needed - config handled by token
+            # No flags needed - config handled by token.json
             cmd = [
                 "tidal-dl-ng",
                 "dl",
@@ -67,13 +79,12 @@ async def download_track(request: DownloadRequest):
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                env={**os.environ, "TIDAL_TOKEN": os.getenv("TIDAL_TOKEN", "")}
+                stderr=asyncio.subprocess.PIPE
             )
             
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(),
-                timeout=180.0  # 3 minute timeout for HiRes files
+                timeout=300.0  # 5 minute timeout for HiRes files
             )
             
             if process.returncode != 0:
