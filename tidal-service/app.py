@@ -53,12 +53,12 @@ async def download_track(request: DownloadRequest):
             }
             quality_level = quality_map.get(request.quality, "LOSSLESS")
             
-            # Run tidal-dl-ng
+            # CORRECT USAGE per official docs: tidal-dl-ng dl <URL>
+            # No flags needed - config handled by token
             cmd = [
-                "tidal-dl",
-                "-u", request.url,
-                "-q", quality_level,
-                "-o", temp_dir
+                "tidal-dl-ng",
+                "dl",
+                request.url
             ]
             
             logger.info(f"Running: {' '.join(cmd)}")
