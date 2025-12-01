@@ -44,7 +44,7 @@ async def download_track(request: DownloadRequest):
         # Create temp directory for download
         temp_dir = tempfile.mkdtemp()
         
-            
+        try:
             # CRITICAL: tidal-dl-ng requires token.json file at ~/.config/tidal-dl-ng/token.json
             # Environment variable doesn't work - must create config file
             config_dir = Path.home() / ".config" / "tidal-dl-ng"
